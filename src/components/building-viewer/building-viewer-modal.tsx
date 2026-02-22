@@ -107,8 +107,9 @@ export default function BuildingViewerModal({ onClose }: BuildingViewerModalProp
               visibleFloors={visibleFloors}
               onChange={setVisibleFloors}
             />
-            <div className="absolute bottom-4 right-4 text-[#666699] text-xs text-right pointer-events-none">
-              Drag to orbit · Scroll to zoom · Right-drag to pan
+            <div className="absolute bottom-4 right-4 text-[#666699] text-xs text-right pointer-events-none space-y-0.5">
+              <div>Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+              <div className="text-[10px] opacity-75">Press ESC to close</div>
             </div>
           </>
         )}
@@ -128,7 +129,8 @@ export default function BuildingViewerModal({ onClose }: BuildingViewerModalProp
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-white hover:bg-white/20 pointer-events-auto"
+          className="text-white hover:bg-white/20 pointer-events-auto bg-black/30 backdrop-blur-sm transition-all hover:scale-110 shrink-0"
+          aria-label="Close building viewer"
         >
           <X className="h-5 w-5" />
         </Button>

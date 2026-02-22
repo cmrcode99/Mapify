@@ -158,8 +158,9 @@ export function BuildingPopup({ building, onClose, onCheckin, onView3D }: Buildi
           <Button
             size="sm"
             variant="outline"
-            className="mt-3 w-full"
+            className="mt-3 w-full transition-all hover:scale-[1.02]"
             onClick={onView3D}
+            aria-label="Open 3D building viewer"
           >
             <Box className="mr-1.5 h-3.5 w-3.5" />
             View 3D Model
@@ -168,9 +169,11 @@ export function BuildingPopup({ building, onClose, onCheckin, onView3D }: Buildi
 
         <Button
           size="sm"
-          className={building.building_code === "ECEB" && onView3D ? "mt-2 w-full" : "mt-3 w-full"}
+          className={`${building.building_code === "ECEB" && onView3D ? "mt-2" : "mt-3"} w-full transition-all hover:scale-[1.02]`}
           onClick={() => onCheckin(building.building_id, building.building_name)}
+          aria-label={`Check in to ${building.building_name}`}
         >
+          <MapPin className="mr-1.5 h-3.5 w-3.5" />
           Check in here
         </Button>
       </div>
