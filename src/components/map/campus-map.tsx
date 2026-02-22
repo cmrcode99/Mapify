@@ -13,6 +13,7 @@ interface CampusMapProps {
   checkinData: ActiveCheckinData[];
   buildings: Building[];
   onCheckin: (buildingId: string, buildingName: string) => void;
+  onView3D?: () => void;
   mapStyle: string;
   focusBuildingId: string | null;
   focusCounter: number;
@@ -22,6 +23,7 @@ export function CampusMap({
   checkinData,
   buildings,
   onCheckin,
+  onView3D,
   mapStyle,
   focusBuildingId,
   focusCounter,
@@ -107,6 +109,7 @@ export function CampusMap({
           building={selectedBuilding}
           onClose={handleClosePopup}
           onCheckin={onCheckin}
+          onView3D={onView3D}
         />
       )}
     </Map>

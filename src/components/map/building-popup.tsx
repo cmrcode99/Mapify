@@ -3,7 +3,7 @@
 import { Popup } from "react-map-gl/mapbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, MapPin, Activity, Loader2 } from "lucide-react";
+import { Users, MapPin, Activity, Loader2, Box } from "lucide-react";
 import { useFootTraffic } from "@/hooks/use-foot-traffic";
 import type { ActiveCheckinData } from "@/lib/types";
 
@@ -11,6 +11,7 @@ interface BuildingPopupProps {
   building: ActiveCheckinData;
   onClose: () => void;
   onCheckin: (buildingId: string, buildingName: string) => void;
+  onView3D?: () => void;
 }
 
 function BusynessBar({ value, label }: { value: number; label: string }) {
@@ -44,7 +45,7 @@ function BusynessBar({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function BuildingPopup({ building, onClose, onCheckin }: BuildingPopupProps) {
+export function BuildingPopup({ building, onClose, onCheckin, onView3D }: BuildingPopupProps) {
   const { data: traffic, loading: trafficLoading } = useFootTraffic(
     building.building_name,
     building.address
@@ -153,9 +154,21 @@ export function BuildingPopup({ building, onClose, onCheckin }: BuildingPopupPro
           </div>
         )}
 
+        {building.building_code === "ECEB" && onView3D && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-3 w-full"
+            onClick={onView3D}
+          >
+            <Box className="mr-1.5 h-3.5 w-3.5" />
+            View 3D Model
+          </Button>
+        )}
+
         <Button
           size="sm"
-          className="mt-3 w-full"
+          className={building.building_code === "ECEB" && onView3D ? "mt-2 w-full" : "mt-3 w-full"}
           onClick={() => onCheckin(building.building_id, building.building_name)}
         >
           Check in here

@@ -30,6 +30,11 @@ import { useActiveCheckin } from "@/hooks/use-active-checkin";
 import { CheckinPanel } from "@/components/checkin/checkin-panel";
 import { signOut } from "@/app/actions";
 
+const BuildingViewerModal = dynamic(
+  () => import("@/components/building-viewer/building-viewer-modal"),
+  { ssr: false }
+);
+
 const CampusMap = dynamic(
   () => import("@/components/map/campus-map").then((mod) => ({ default: mod.CampusMap })),
   {
@@ -60,6 +65,7 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
   // Incremented to re-trigger the map focus even for the same building
   const [focusBuildingId, setFocusBuildingId] = useState<string | null>(null);
   const [focusCounter, setFocusCounter] = useState(0);
+  const [show3DViewer, setShow3DViewer] = useState(false);
 
   const totalActive = checkinData.reduce((sum, b) => sum + b.active_count, 0);
 
@@ -89,6 +95,10 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
     requestMapFocus(buildingId);
     setSidebarOpen(true);
   }, [requestMapFocus]);
+
+  const handleView3D = useCallback(() => {
+    setShow3DViewer(true);
+  }, []);
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden">
@@ -205,11 +215,16 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
           checkinData={checkinData}
           buildings={buildings}
           onCheckin={handleMapCheckin}
+          onView3D={handleView3D}
           mapStyle={satellite ? SATELLITE_STYLE : STREETS_STYLE}
           focusBuildingId={focusBuildingId}
           focusCounter={focusCounter}
         />
       </main>
+
+      {show3DViewer && (
+        <BuildingViewerModal onClose={() => setShow3DViewer(false)} />
+      )}
     </div>
   );
 }
