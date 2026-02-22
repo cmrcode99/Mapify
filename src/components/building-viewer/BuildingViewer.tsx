@@ -17,16 +17,36 @@ export interface Config {
   roomTypes: Record<string, { name: string; color?: string }>;
 }
 
+export interface RoomInfo {
+  id: string;
+  name: string;
+  centroid: [number, number];
+  cellCount: number;
+}
+
 interface Props {
   floors: FloorData[];
   config: Config;
   visibleFloors: boolean[];
+  roomAvailability?: Record<string, "available" | "in-use">;
+  roomGrids?: (string | null)[][][];
+  roomMap?: { floors: { label: string; rooms: RoomInfo[] }[] };
 }
 
 // Room type codes that have colored tiles (not walls/outline)
 const ROOM_CODES = ["A", "C", "R", "L", "O", "S", "G"];
 
-export default function BuildingViewer({ floors, config, visibleFloors }: Props) {
+const COLOR_AVAILABLE = new THREE.Color(0x22c55e);
+const COLOR_IN_USE = new THREE.Color(0xef4444);
+
+export default function BuildingViewer({
+  floors,
+  config,
+  visibleFloors,
+  roomAvailability,
+  roomGrids,
+  roomMap,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const meshGroupsRef = useRef<{ meshes: THREE.Object3D[] }[]>([]);
 
@@ -74,7 +94,8 @@ export default function BuildingViewer({ floors, config, visibleFloors }: Props)
     scene.add(back);
 
     // Max grid dimensions
-    let maxGW = 0, maxGH = 0;
+    let maxGW = 0,
+      maxGH = 0;
     for (const f of floors) {
       if (f.gridW > maxGW) maxGW = f.gridW;
       if (f.gridH > maxGH) maxGH = f.gridH;
@@ -88,12 +109,18 @@ export default function BuildingViewer({ floors, config, visibleFloors }: Props)
 
     // Materials
     const wallMat = new THREE.MeshPhysicalMaterial({
-      color: 0xc0d0e0, transparent: true, opacity: 0.45,
-      roughness: 0.6, metalness: 0.1,
+      color: 0xc0d0e0,
+      transparent: true,
+      opacity: 0.45,
+      roughness: 0.6,
+      metalness: 0.1,
     });
     const outlineMat = new THREE.MeshPhysicalMaterial({
-      color: 0xd0d8e8, transparent: true, opacity: 0.55,
-      roughness: 0.4, metalness: 0.15,
+      color: 0xd0d8e8,
+      transparent: true,
+      opacity: 0.55,
+      roughness: 0.4,
+      metalness: 0.15,
     });
 
     const roomMats: Record<string, THREE.MeshPhysicalMaterial> = {};
@@ -101,92 +128,168 @@ export default function BuildingViewer({ floors, config, visibleFloors }: Props)
       const rt = roomTypes[key];
       if (!rt?.color) continue;
       roomMats[key] = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color(rt.color), transparent: true, opacity: 0.65,
-        roughness: 0.5, metalness: 0.0,
+        color: new THREE.Color(rt.color),
+        transparent: true,
+        opacity: 0.65,
+        roughness: 0.5,
+        metalness: 0.0,
       });
     }
 
-    // Count instances per type per floor
-    const ALL_TYPES = ["W", "B", ...ROOM_CODES];
-    const counts: Record<string, number> = {};
-    for (let fi = 0; fi < floors.length; fi++) {
-      const { grid } = floors[fi];
-      for (const t of ALL_TYPES) counts[`${t}_${fi}`] = 0;
-      for (const row of grid) {
-        for (const cell of row) {
-          if (cell) counts[`${cell}_${fi}`] = (counts[`${cell}_${fi}`] || 0) + 1;
-        }
-      }
-    }
+    // Availability materials
+    const availableMat = new THREE.MeshPhysicalMaterial({
+      color: COLOR_AVAILABLE,
+      transparent: true,
+      opacity: 0.7,
+      roughness: 0.4,
+      metalness: 0.0,
+    });
+    const inUseMat = new THREE.MeshPhysicalMaterial({
+      color: COLOR_IN_USE,
+      transparent: true,
+      opacity: 0.7,
+      roughness: 0.4,
+      metalness: 0.0,
+    });
 
-    // Build instanced meshes
+    // Categorize cells: for each floor, split into wall/outline/available/inuse/regular-type
     const meshGroups: { meshes: THREE.Object3D[] }[] = [];
 
     for (let fi = 0; fi < floors.length; fi++) {
       const { grid, gridW, gridH } = floors[fi];
-      const floorMeshes: { key: string; mesh: THREE.InstancedMesh; idx: number }[] = [];
+      const roomGrid = roomGrids?.[fi];
+      const floorMeshes: THREE.Object3D[] = [];
 
-      const wallCount = counts[`W_${fi}`] || 0;
-      if (wallCount > 0) {
-        const mesh = new THREE.InstancedMesh(wallGeo, wallMat, wallCount);
-        scene.add(mesh);
-        floorMeshes.push({ key: "W", mesh, idx: 0 });
-      }
-
-      const outlineCount = counts[`B_${fi}`] || 0;
-      if (outlineCount > 0) {
-        const mesh = new THREE.InstancedMesh(outlineGeo, outlineMat, outlineCount);
-        scene.add(mesh);
-        floorMeshes.push({ key: "B", mesh, idx: 0 });
-      }
-
-      for (const key of ROOM_CODES) {
-        const cnt = counts[`${key}_${fi}`] || 0;
-        if (cnt === 0 || !roomMats[key]) continue;
-        const mesh = new THREE.InstancedMesh(floorGeo, roomMats[key], cnt);
-        scene.add(mesh);
-        floorMeshes.push({ key, mesh, idx: 0 });
-      }
-
-      const yBaseWall = fi * floorGap + voxelH / 2;
-      const yBaseFloor = fi * floorGap + 0.2;
-      const offsetX = (maxGW - gridW) / 2;
-      const offsetZ = (maxGH - gridH) / 2;
+      // Collect cells by category
+      const wallCells: [number, number][] = [];
+      const outlineCells: [number, number][] = [];
+      const availCells: [number, number][] = [];
+      const inUseCells: [number, number][] = [];
+      const typeCells: Record<string, [number, number][]> = {};
+      for (const key of ROOM_CODES) typeCells[key] = [];
 
       for (let gy = 0; gy < grid.length; gy++) {
         for (let gx = 0; gx < grid[gy].length; gx++) {
           const t = grid[gy][gx];
           if (!t) continue;
-          const fm = floorMeshes.find((f) => f.key === t);
-          if (!fm) continue;
 
-          const posX = (gridW - gx - 1) + offsetX + 0.5;
-          const posZ = maxGH - (gy + offsetZ) - 0.5;
-
-          if (t === "W" || t === "B") {
-            dummy.position.set(posX, yBaseWall, posZ);
+          if (t === "W") {
+            wallCells.push([gy, gx]);
+          } else if (t === "B") {
+            outlineCells.push([gy, gx]);
+          } else if (roomGrid && roomAvailability) {
+            const roomId = roomGrid[gy]?.[gx];
+            if (roomId && roomAvailability[roomId]) {
+              if (roomAvailability[roomId] === "in-use") {
+                inUseCells.push([gy, gx]);
+              } else {
+                availCells.push([gy, gx]);
+              }
+            } else if (roomId) {
+              // Room mapped but no availability data — default to available
+              availCells.push([gy, gx]);
+            } else {
+              typeCells[t]?.push([gy, gx]);
+            }
           } else {
-            dummy.position.set(posX, yBaseFloor, posZ);
+            typeCells[t]?.push([gy, gx]);
           }
-          dummy.updateMatrix();
-          fm.mesh.setMatrixAt(fm.idx++, dummy.matrix);
         }
       }
-      for (const fm of floorMeshes) fm.mesh.instanceMatrix.needsUpdate = true;
+
+      const offsetX = (maxGW - gridW) / 2;
+      const offsetZ = (maxGH - gridH) / 2;
+      const yBaseWall = fi * floorGap + voxelH / 2;
+      const yBaseFloor = fi * floorGap + 0.2;
+
+      const placeCell = (gy: number, gx: number, isWall: boolean) => {
+        const posX = gridW - gx - 1 + offsetX + 0.5;
+        const posZ = maxGH - (gy + offsetZ) - 0.5;
+        dummy.position.set(posX, isWall ? yBaseWall : yBaseFloor, posZ);
+        dummy.updateMatrix();
+      };
+
+      // Walls
+      if (wallCells.length > 0) {
+        const mesh = new THREE.InstancedMesh(wallGeo, wallMat, wallCells.length);
+        wallCells.forEach(([gy, gx], idx) => {
+          placeCell(gy, gx, true);
+          mesh.setMatrixAt(idx, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+        floorMeshes.push(mesh);
+      }
+
+      // Outlines
+      if (outlineCells.length > 0) {
+        const mesh = new THREE.InstancedMesh(outlineGeo, outlineMat, outlineCells.length);
+        outlineCells.forEach(([gy, gx], idx) => {
+          placeCell(gy, gx, true);
+          mesh.setMatrixAt(idx, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+        floorMeshes.push(mesh);
+      }
+
+      // Available rooms (green)
+      if (availCells.length > 0) {
+        const mesh = new THREE.InstancedMesh(floorGeo, availableMat, availCells.length);
+        availCells.forEach(([gy, gx], idx) => {
+          placeCell(gy, gx, false);
+          mesh.setMatrixAt(idx, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+        floorMeshes.push(mesh);
+      }
+
+      // In-use rooms (red)
+      if (inUseCells.length > 0) {
+        const mesh = new THREE.InstancedMesh(floorGeo, inUseMat, inUseCells.length);
+        inUseCells.forEach(([gy, gx], idx) => {
+          placeCell(gy, gx, false);
+          mesh.setMatrixAt(idx, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+        floorMeshes.push(mesh);
+      }
+
+      // Regular type cells (not assigned to a room with availability)
+      for (const key of ROOM_CODES) {
+        const cells = typeCells[key];
+        if (cells.length === 0 || !roomMats[key]) continue;
+        const mesh = new THREE.InstancedMesh(floorGeo, roomMats[key], cells.length);
+        cells.forEach(([gy, gx], idx) => {
+          placeCell(gy, gx, false);
+          mesh.setMatrixAt(idx, dummy.matrix);
+        });
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+        floorMeshes.push(mesh);
+      }
 
       // Floor slab
       const slabGeo = new THREE.BoxGeometry(gridW, 0.12, gridH);
       const slabMat = new THREE.MeshPhysicalMaterial({
-        color: 0x8899aa, transparent: true, opacity: 0.12,
-        roughness: 0.8, metalness: 0.0,
+        color: 0x8899aa,
+        transparent: true,
+        opacity: 0.12,
+        roughness: 0.8,
+        metalness: 0.0,
       });
       const slab = new THREE.Mesh(slabGeo, slabMat);
-      slab.position.set(gridW / 2 + offsetX, fi * floorGap, gridH / 2 + offsetZ);
+      slab.position.set(
+        gridW / 2 + offsetX,
+        fi * floorGap,
+        gridH / 2 + offsetZ
+      );
       scene.add(slab);
+      floorMeshes.push(slab);
 
-      meshGroups.push({
-        meshes: [...floorMeshes.map((f) => f.mesh), slab],
-      });
+      meshGroups.push({ meshes: floorMeshes });
     }
 
     // Floor label sprites
@@ -198,11 +301,47 @@ export default function BuildingViewer({ floors, config, visibleFloors }: Props)
       meshGroups[fi].meshes.push(sprite);
     }
 
+    // Room number labels
+    if (roomMap) {
+      for (let fi = 0; fi < roomMap.floors.length; fi++) {
+        const { gridW, gridH } = floors[fi];
+        const offsetX = (maxGW - gridW) / 2;
+        const offsetZ = (maxGH - gridH) / 2;
+
+        for (const room of roomMap.floors[fi].rooms) {
+          // Skip corridors and circulation
+          if (room.id.startsWith("C") || room.id.startsWith("STAIR") || room.id.startsWith("ELEV")) continue;
+
+          const [centR, centC] = room.centroid;
+
+          const posX = gridW - centC - 1 + offsetX + 0.5;
+          const posZ = maxGH - (centR + offsetZ) - 0.5;
+          const posY = fi * floorGap + voxelH + 0.5;
+
+          const sprite = makeRoomLabel(room.id);
+          sprite.position.set(posX, posY, posZ);
+
+          // Scale based on room size
+          const scale = room.cellCount > 200 ? 14 : room.cellCount > 50 ? 10 : 7;
+          sprite.scale.set(scale, scale * 0.4, 1);
+          scene.add(sprite);
+          meshGroups[fi].meshes.push(sprite);
+        }
+      }
+    }
+
     meshGroupsRef.current = meshGroups;
 
     // Camera
-    const cx = maxGW / 2, cy = (floors.length - 1) * floorGap / 2, cz = maxGH / 2;
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 3000);
+    const cx = maxGW / 2,
+      cy = ((floors.length - 1) * floorGap) / 2,
+      cz = maxGH / 2;
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      container.clientWidth / container.clientHeight,
+      1,
+      3000
+    );
     camera.position.set(cx + 220, cy + 160, cz + 250);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -237,7 +376,7 @@ export default function BuildingViewer({ floors, config, visibleFloors }: Props)
       container.removeChild(renderer.domElement);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [floors, config]);
+  }, [floors, config, roomAvailability, roomGrids, roomMap]);
 
   return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
 }
@@ -258,5 +397,31 @@ function makeTextSprite(text: string): THREE.Sprite {
   ctx.fillText(text, 128, 32);
   const tex = new THREE.CanvasTexture(c);
   const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+  return new THREE.Sprite(mat);
+}
+
+function makeRoomLabel(roomId: string): THREE.Sprite {
+  const c = document.createElement("canvas");
+  c.width = 128;
+  c.height = 48;
+  const ctx = c.getContext("2d")!;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+  ctx.beginPath();
+  ctx.roundRect(4, 4, 120, 40, 6);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 22px Segoe UI, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(roomId, 64, 24);
+
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    depthTest: false,
+    transparent: true,
+  });
   return new THREE.Sprite(mat);
 }
