@@ -80,10 +80,36 @@ export function CampusMap({
     setSelectedBuilding(null);
   }, []);
 
+  const handleMapClick = useCallback(() => {
+    // Close popup when clicking on empty map area
+    if (selectedBuilding) {
+      setSelectedBuilding(null);
+    }
+  }, [selectedBuilding]);
+
+  // Handle ESC key to close popup
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedBuilding) {
+        setSelectedBuilding(null);
+        // Reset view on ESC
+        mapRef.current?.flyTo({
+          center: [UIUC_CENTER.longitude, UIUC_CENTER.latitude],
+          zoom: UIUC_CENTER.zoom,
+          duration: 800,
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedBuilding]);
+
   return (
     <Map
       ref={mapRef}
       onLoad={() => setMapLoaded(true)}
+      onClick={handleMapClick}
       initialViewState={{
         latitude: UIUC_CENTER.latitude,
         longitude: UIUC_CENTER.longitude,
@@ -98,6 +124,8 @@ export function CampusMap({
       ]}
       minZoom={13}
       maxZoom={20}
+      interactiveLayerIds={[]}
+      cursor={selectedBuilding ? "pointer" : "grab"}
     >
       <HeatmapLayer data={checkinData} />
       <BuildingMarkers
