@@ -31,6 +31,7 @@ interface Props {
   roomAvailability?: Record<string, "available" | "in-use">;
   roomGrids?: (string | null)[][][];
   roomMap?: { floors: { label: string; rooms: RoomInfo[] }[] };
+  onRoomClick?: (roomId: string, floorIndex: number) => void;
 }
 
 // Room type codes that have colored tiles (not walls/outline)
@@ -46,9 +47,12 @@ export default function BuildingViewer({
   roomAvailability,
   roomGrids,
   roomMap,
+  onRoomClick,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const meshGroupsRef = useRef<{ meshes: THREE.Object3D[] }[]>([]);
+  const onRoomClickRef = useRef(onRoomClick);
+  onRoomClickRef.current = onRoomClick;
 
   // Toggle floor visibility
   useEffect(() => {
@@ -155,16 +159,20 @@ export default function BuildingViewer({
     // Categorize cells: for each floor, split into wall/outline/available/inuse/regular-type
     const meshGroups: { meshes: THREE.Object3D[] }[] = [];
 
+    // Track instanced mesh → room ID mapping for click detection
+    type RoomMeshMap = { mesh: THREE.InstancedMesh; roomIds: (string | null)[]; floorIndex: number };
+    const roomMeshMaps: RoomMeshMap[] = [];
+
     for (let fi = 0; fi < floors.length; fi++) {
       const { grid, gridW, gridH } = floors[fi];
       const roomGrid = roomGrids?.[fi];
       const floorMeshes: THREE.Object3D[] = [];
 
-      // Collect cells by category
+      // Collect cells by category (with room ID for clickable cells)
       const wallCells: [number, number][] = [];
       const outlineCells: [number, number][] = [];
-      const availCells: [number, number][] = [];
-      const inUseCells: [number, number][] = [];
+      const availCells: { pos: [number, number]; roomId: string | null }[] = [];
+      const inUseCells: { pos: [number, number]; roomId: string | null }[] = [];
       const typeCells: Record<string, [number, number][]> = {};
       for (const key of ROOM_CODES) typeCells[key] = [];
 
@@ -181,13 +189,13 @@ export default function BuildingViewer({
             const roomId = roomGrid[gy]?.[gx];
             if (roomId && roomAvailability[roomId]) {
               if (roomAvailability[roomId] === "in-use") {
-                inUseCells.push([gy, gx]);
+                inUseCells.push({ pos: [gy, gx], roomId });
               } else {
-                availCells.push([gy, gx]);
+                availCells.push({ pos: [gy, gx], roomId });
               }
             } else if (roomId) {
               // Room mapped but no availability data — default to available
-              availCells.push([gy, gx]);
+              availCells.push({ pos: [gy, gx], roomId });
             } else {
               typeCells[t]?.push([gy, gx]);
             }
@@ -236,25 +244,31 @@ export default function BuildingViewer({
       // Available rooms (green)
       if (availCells.length > 0) {
         const mesh = new THREE.InstancedMesh(floorGeo, availableMat, availCells.length);
-        availCells.forEach(([gy, gx], idx) => {
+        const roomIds: (string | null)[] = [];
+        availCells.forEach(({ pos: [gy, gx], roomId }, idx) => {
           placeCell(gy, gx, false);
           mesh.setMatrixAt(idx, dummy.matrix);
+          roomIds.push(roomId);
         });
         mesh.instanceMatrix.needsUpdate = true;
         scene.add(mesh);
         floorMeshes.push(mesh);
+        roomMeshMaps.push({ mesh, roomIds, floorIndex: fi });
       }
 
       // In-use rooms (red)
       if (inUseCells.length > 0) {
         const mesh = new THREE.InstancedMesh(floorGeo, inUseMat, inUseCells.length);
-        inUseCells.forEach(([gy, gx], idx) => {
+        const roomIds: (string | null)[] = [];
+        inUseCells.forEach(({ pos: [gy, gx], roomId }, idx) => {
           placeCell(gy, gx, false);
           mesh.setMatrixAt(idx, dummy.matrix);
+          roomIds.push(roomId);
         });
         mesh.instanceMatrix.needsUpdate = true;
         scene.add(mesh);
         floorMeshes.push(mesh);
+        roomMeshMaps.push({ mesh, roomIds, floorIndex: fi });
       }
 
       // Regular type cells (not assigned to a room with availability)
@@ -360,6 +374,43 @@ export default function BuildingViewer({
     };
     window.addEventListener("resize", onResize);
 
+    // Raycaster click handling for room selection
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let pointerDownPos = { x: 0, y: 0 };
+
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    };
+
+    const onClick = (e: MouseEvent) => {
+      // Ignore if the user was dragging (orbit)
+      const dx = e.clientX - pointerDownPos.x;
+      const dy = e.clientY - pointerDownPos.y;
+      if (dx * dx + dy * dy > 25) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      // Test against all room meshes
+      for (const { mesh, roomIds, floorIndex } of roomMeshMaps) {
+        if (!mesh.visible) continue;
+        const hits = raycaster.intersectObject(mesh);
+        if (hits.length > 0 && hits[0].instanceId != null) {
+          const roomId = roomIds[hits[0].instanceId];
+          if (roomId && onRoomClickRef.current) {
+            onRoomClickRef.current(roomId, floorIndex);
+            return;
+          }
+        }
+      }
+    };
+
+    renderer.domElement.addEventListener("pointerdown", onPointerDown);
+    renderer.domElement.addEventListener("click", onClick);
+
     // Animation loop
     let animId: number;
     const animate = () => {
@@ -372,6 +423,8 @@ export default function BuildingViewer({
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", onResize);
+      renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      renderer.domElement.removeEventListener("click", onClick);
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };

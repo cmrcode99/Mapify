@@ -300,7 +300,10 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
       </main>
 
       {show3DViewer && (
-        <BuildingViewerModal onClose={() => setShow3DViewer(false)} />
+        <BuildingViewerModal
+          onClose={() => setShow3DViewer(false)}
+          checkinData={checkinData}
+        />
       )}
     </div>
   );

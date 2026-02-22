@@ -22,13 +22,58 @@ export const CLASS_SCHEDULES: ClassSession[] = [
   { building_code: "SC", room: "2405", course: "CS 128", title: "Intro to Computer Science II", days: [1, 3, 5], start_hour: 14, start_min: 0, end_hour: 14, end_min: 50 },
   { building_code: "SC", room: "2405", course: "CS 357", title: "Numerical Methods", days: [2, 4], start_hour: 15, start_min: 30, end_hour: 16, end_min: 45 },
 
-  // ECEB
+  // ECEB — Existing
   { building_code: "ECEB", room: "1002", course: "ECE 110", title: "Intro to Electronics", days: [1, 3, 5], start_hour: 8, start_min: 0, end_hour: 8, end_min: 50 },
   { building_code: "ECEB", room: "1002", course: "ECE 220", title: "Computer Systems & Programming", days: [2, 4], start_hour: 9, start_min: 30, end_hour: 10, end_min: 45 },
+  { building_code: "ECEB", room: "1002", course: "ECE 210", title: "Analog Signal Processing", days: [1, 3, 5], start_hour: 14, start_min: 0, end_hour: 14, end_min: 50 },
   { building_code: "ECEB", room: "1013", course: "ECE 310", title: "Digital Signal Processing", days: [1, 3, 5], start_hour: 10, start_min: 0, end_hour: 10, end_min: 50 },
   { building_code: "ECEB", room: "1013", course: "ECE 385", title: "Digital Systems Laboratory", days: [2, 4], start_hour: 13, start_min: 0, end_hour: 14, end_min: 15 },
+  { building_code: "ECEB", room: "1013", course: "ECE 486", title: "Control Systems", days: [1, 3, 5], start_hour: 15, start_min: 0, end_hour: 15, end_min: 50 },
   { building_code: "ECEB", room: "3017", course: "ECE 391", title: "Computer Systems Engineering", days: [1, 3, 5], start_hour: 12, start_min: 0, end_hour: 12, end_min: 50 },
   { building_code: "ECEB", room: "3017", course: "ECE 411", title: "Computer Organization & Design", days: [2, 4], start_hour: 15, start_min: 30, end_hour: 16, end_min: 45 },
+
+  // ECEB — Level 01 additional
+  { building_code: "ECEB", room: "1014", course: "ECE 199", title: "ECE Freshman Projects Lab", days: [2, 4], start_hour: 10, start_min: 0, end_hour: 11, end_min: 15 },
+  { building_code: "ECEB", room: "1014", course: "ECE 445", title: "Senior Design Lab", days: [1, 3], start_hour: 14, start_min: 0, end_hour: 16, end_min: 50 },
+  { building_code: "ECEB", room: "1016", course: "ECE 198", title: "Freshman Seminar", days: [5], start_hour: 13, start_min: 0, end_hour: 13, end_min: 50 },
+  { building_code: "ECEB", room: "1016", course: "ECE 220", title: "CS & Programming Lab", days: [1, 3], start_hour: 9, start_min: 0, end_hour: 9, end_min: 50 },
+  { building_code: "ECEB", room: "1016", course: "ECE 110", title: "Electronics Lab Section", days: [2, 4], start_hour: 15, start_min: 0, end_hour: 16, end_min: 15 },
+  { building_code: "ECEB", room: "1031", course: "ECE 110", title: "TA Office Hours", days: [1, 2, 3, 4, 5], start_hour: 11, start_min: 0, end_hour: 12, end_min: 0 },
+  { building_code: "ECEB", room: "1022", course: "ECE 120", title: "Study Group", days: [1, 3], start_hour: 16, start_min: 0, end_hour: 17, end_min: 0 },
+  { building_code: "ECEB", room: "1024", course: "ECE 205", title: "Study Group", days: [2, 4], start_hour: 12, start_min: 0, end_hour: 13, end_min: 0 },
+
+  // ECEB — Level 02
+  { building_code: "ECEB", room: "2015", course: "ECE 329", title: "Fields and Waves I", days: [1, 3, 5], start_hour: 11, start_min: 0, end_hour: 11, end_min: 50 },
+  { building_code: "ECEB", room: "2015", course: "ECE 340", title: "Semiconductor Electronics", days: [2, 4], start_hour: 14, start_min: 0, end_hour: 15, end_min: 15 },
+  { building_code: "ECEB", room: "2070", course: "ECE 385", title: "Digital Systems Lab Section A", days: [1, 3], start_hour: 10, start_min: 0, end_hour: 11, end_min: 50 },
+  { building_code: "ECEB", room: "2070", course: "ECE 385", title: "Digital Systems Lab Section B", days: [2, 4], start_hour: 10, start_min: 0, end_hour: 11, end_min: 50 },
+  { building_code: "ECEB", room: "2076", course: "ECE 110", title: "Electronics Lab Section C", days: [1, 3], start_hour: 13, start_min: 0, end_hour: 14, end_min: 50 },
+  { building_code: "ECEB", room: "2076", course: "ECE 110", title: "Electronics Lab Section D", days: [2, 4], start_hour: 8, start_min: 0, end_hour: 9, end_min: 50 },
+
+  // ECEB — Level 03
+  { building_code: "ECEB", room: "3013", course: "ECE 374", title: "Algorithms & Models of Computation", days: [2, 4], start_hour: 11, start_min: 0, end_hour: 12, end_min: 15 },
+  { building_code: "ECEB", room: "3013", course: "ECE 448", title: "Artificial Intelligence", days: [1, 3, 5], start_hour: 9, start_min: 0, end_hour: 9, end_min: 50 },
+  { building_code: "ECEB", room: "3015", course: "ECE 313", title: "Probability with Engineering Apps", days: [1, 3, 5], start_hour: 13, start_min: 0, end_hour: 13, end_min: 50 },
+  { building_code: "ECEB", room: "3015", course: "ECE 422", title: "Power Systems Analysis", days: [2, 4], start_hour: 9, start_min: 30, end_hour: 10, end_min: 45 },
+  { building_code: "ECEB", room: "3008", course: "ECE 438", title: "Communication Networks", days: [1, 3, 5], start_hour: 10, start_min: 0, end_hour: 10, end_min: 50 },
+  { building_code: "ECEB", room: "3008", course: "ECE 462", title: "Logic Synthesis", days: [2, 4], start_hour: 15, start_min: 30, end_hour: 16, end_min: 45 },
+  { building_code: "ECEB", room: "3070", course: "ECE 391", title: "Systems Engineering Lab", days: [1, 3], start_hour: 14, start_min: 0, end_hour: 16, end_min: 50 },
+  { building_code: "ECEB", room: "3070", course: "ECE 411", title: "Computer Org Lab", days: [2, 4], start_hour: 13, start_min: 0, end_hour: 15, end_min: 50 },
+  { building_code: "ECEB", room: "3005", course: "ECE 200", title: "Graduate Student Seminar", days: [5], start_hour: 15, start_min: 0, end_hour: 16, end_min: 0 },
+
+  // ECEB — Level 04
+  { building_code: "ECEB", room: "4070", course: "ECE 444", title: "IC Device Theory & Fabrication", days: [2, 4], start_hour: 9, start_min: 0, end_hour: 10, end_min: 50 },
+  { building_code: "ECEB", room: "4070", course: "ECE 482", title: "Digital IC Design", days: [1, 3], start_hour: 13, start_min: 0, end_hour: 14, end_min: 50 },
+  { building_code: "ECEB", room: "4020", course: "ECE 469", title: "Power Electronics Lab", days: [1, 3, 5], start_hour: 10, start_min: 0, end_hour: 10, end_min: 50 },
+  { building_code: "ECEB", room: "4020", course: "ECE 464", title: "Power Electronics", days: [2, 4], start_hour: 14, start_min: 0, end_hour: 15, end_min: 15 },
+  { building_code: "ECEB", room: "4026", course: "ECE 480", title: "Analog IC Design Lecture", days: [1, 3, 5], start_hour: 15, start_min: 0, end_hour: 15, end_min: 50 },
+
+  // ECEB — Level 05
+  { building_code: "ECEB", room: "5020", course: "ECE 460", title: "Optical Imaging", days: [2, 4], start_hour: 11, start_min: 0, end_hour: 12, end_min: 15 },
+  { building_code: "ECEB", room: "5020", course: "ECE 455", title: "Optical Electronics", days: [1, 3, 5], start_hour: 14, start_min: 0, end_hour: 14, end_min: 50 },
+  { building_code: "ECEB", room: "5070", course: "ECE 350", title: "Fields & Waves II Lab", days: [1, 3], start_hour: 10, start_min: 0, end_hour: 11, end_min: 50 },
+  { building_code: "ECEB", room: "5078", course: "ECE 498", title: "Special Topics Seminar", days: [2, 4], start_hour: 15, start_min: 30, end_hour: 16, end_min: 45 },
+  { building_code: "ECEB", room: "5078", course: "ECE 500", title: "ECE Colloquium", days: [5], start_hour: 10, start_min: 0, end_hour: 11, end_min: 0 },
 
   // DCL
   { building_code: "DCL", room: "1320", course: "CS 173", title: "Discrete Structures", days: [1, 3, 5], start_hour: 9, start_min: 0, end_hour: 9, end_min: 50 },
@@ -171,3 +216,38 @@ export function formatClassTime(session: ClassSession): string {
   const ea = session.end_hour < 12 ? "AM" : "PM";
   return `${sh}:${pad(session.start_min)} ${sa} – ${eh}:${pad(session.end_min)} ${ea}`;
 }
+
+export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/**
+ * Get all class sessions for a given building/room, sorted by start time.
+ */
+export function getAllClassesForRoom(
+  buildingCode: string,
+  roomNumber: string
+): ClassSession[] {
+  const normalized = roomNumber.trim().toUpperCase();
+  return CLASS_SCHEDULES
+    .filter(
+      (s) =>
+        s.building_code === buildingCode &&
+        s.room.toUpperCase() === normalized
+    )
+    .sort(
+      (a, b) => (a.start_hour * 60 + a.start_min) - (b.start_hour * 60 + b.start_min)
+    );
+}
+
+/**
+ * Get all class sessions for a room on a specific day of week (0=Sun … 6=Sat).
+ */
+export function getClassesForRoomOnDay(
+  buildingCode: string,
+  roomNumber: string,
+  dayOfWeek: number
+): ClassSession[] {
+  return getAllClassesForRoom(buildingCode, roomNumber).filter((s) =>
+    s.days.includes(dayOfWeek)
+  );
+}
+
