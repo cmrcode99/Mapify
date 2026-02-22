@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, MapPin, Activity, Loader2, Box } from "lucide-react";
 import { useFootTraffic } from "@/hooks/use-foot-traffic";
+import { TrafficChart } from "./traffic-chart";
 import type { ActiveCheckinData } from "@/lib/types";
 
 interface BuildingPopupProps {
@@ -19,15 +20,15 @@ function BusynessBar({ value, label }: { value: number; label: string }) {
 
   const color =
     clamped >= 75 ? "bg-red-500" :
-    clamped >= 50 ? "bg-orange-500" :
-    clamped >= 25 ? "bg-yellow-500" :
-    "bg-emerald-500";
+      clamped >= 50 ? "bg-orange-500" :
+        clamped >= 25 ? "bg-yellow-500" :
+          "bg-emerald-500";
 
   const text =
     clamped >= 75 ? "Very Busy" :
-    clamped >= 50 ? "Busy" :
-    clamped >= 25 ? "Moderate" :
-    "Quiet";
+      clamped >= 50 ? "Busy" :
+        clamped >= 25 ? "Moderate" :
+          "Quiet";
 
   return (
     <div className="space-y-1">
@@ -131,6 +132,16 @@ export function BuildingPopup({ building, onClose, onCheckin, onView3D }: Buildi
                 ? `${traffic.venue_open} \u00B7 No busyness data right now`
                 : "No foot traffic data for this venue"}
             </p>
+          )}
+
+          {/* 24-hour chart — always show when traffic data loaded */}
+          {!trafficLoading && (
+            <div className="mt-1.5 pt-1.5 border-t border-border/50">
+              <TrafficChart
+                venueName={building.building_name}
+                currentBusyness={traffic?.forecasted_busyness ?? traffic?.day_mean}
+              />
+            </div>
           )}
         </div>
 

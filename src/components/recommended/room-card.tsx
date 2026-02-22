@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf } from "lucide-react";
+import { Leaf, Zap, Snowflake } from "lucide-react";
 import type { ScoredRoom } from "./score";
 
 // ── Score ring ────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ interface RoomCardProps {
 export function RoomCard({ room, rank, isSelected, onClick }: RoomCardProps) {
   return (
     <button
-      data-building-id={room.buildingId}
+      data-building-id={room.building.id}
       onClick={onClick}
       className={`
         w-full rounded-xl border p-3 text-left transition-all
@@ -129,14 +129,23 @@ export function RoomCard({ room, rank, isSelected, onClick }: RoomCardProps) {
           {/* Occupancy bar */}
           <OccupancyBar current={room.currentOccupancy} max={room.maxCapacity} />
 
-          {/* Amenity pills */}
-          {room.amenities.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-0.5">
-              {room.amenities.map((a) => (
-                <AmenityPill key={a} amenity={a} />
-              ))}
-            </div>
-          )}
+          {/* Amenity pills + power info */}
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {room.amenities.map((a) => (
+              <AmenityPill key={a} amenity={a} />
+            ))}
+            {room.building.energyActive ? (
+              <span className="flex items-center gap-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                <Zap className="h-2.5 w-2.5" />
+                {room.building.powerUsageKw} kW
+              </span>
+            ) : (
+              <span className="flex items-center gap-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                <Snowflake className="h-2.5 w-2.5" />
+                Not heated
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Score ring */}

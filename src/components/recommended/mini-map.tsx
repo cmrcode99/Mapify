@@ -35,10 +35,11 @@ export function MiniMap({ scoredRooms, selectedBuildingId, onPinClick }: MiniMap
   const pins = useMemo<BuildingPin[]>(() => {
     const byBuilding: Record<string, BuildingPin> = {};
     for (const room of scoredRooms) {
-      const entry = byBuilding[room.buildingId];
+      const bId = room.building.id;
+      const entry = byBuilding[bId];
       if (!entry) {
-        byBuilding[room.buildingId] = {
-          id: room.buildingId,
+        byBuilding[bId] = {
+          id: bId,
           name: room.building.name,
           lat: room.building.lat,
           lng: room.building.lng,

@@ -3,13 +3,15 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Leaf, Info } from "lucide-react";
+import { ArrowLeft, Sparkles, Leaf, Info, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RoomCard } from "@/components/recommended/room-card";
 import { scoreRooms } from "./score";
-import { RECOMMENDED_BUILDINGS } from "./data";
+import { buildRecommendedBuildings } from "./data";
+import { useBuildings } from "@/hooks/use-buildings";
+import { useCheckins } from "@/hooks/use-checkins";
 
 // Dynamic import keeps Mapbox out of SSR
 const MiniMap = dynamic(
@@ -38,8 +40,38 @@ export function RecommendedDashboard() {
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const scoredRooms = useMemo(() => scoreRooms(RECOMMENDED_BUILDINGS), []);
+  // Live data from Supabase
+  const { buildings, loading: buildingsLoading } = useBuildings();
+  const { checkinData, loading: checkinsLoading } = useCheckins();
+
+  const isLoading = buildingsLoading || checkinsLoading;
+
+  // Build recommended buildings from live data
+  const recommendedBuildings = useMemo(
+    () => buildRecommendedBuildings(buildings, checkinData),
+    [buildings, checkinData]
+  );
+
+  const scoredRooms = useMemo(
+    () => scoreRooms(recommendedBuildings),
+    [recommendedBuildings]
+  );
+
   const energySmartCount = scoredRooms.filter((r) => r.isEnergySmart).length;
+  const totalPowerKw = useMemo(
+    () => {
+      const seen = new Set<string>();
+      let total = 0;
+      for (const b of recommendedBuildings) {
+        if (!seen.has(b.id)) {
+          seen.add(b.id);
+          total += b.powerUsageKw;
+        }
+      }
+      return Math.round(total * 10) / 10;
+    },
+    [recommendedBuildings]
+  );
 
   // Card tapped → highlight pin and fly map
   const handleCardClick = useCallback((buildingId: string) => {
@@ -76,7 +108,11 @@ export function RecommendedDashboard() {
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="gap-1 hidden sm:flex">
             <Leaf className="h-3 w-3 text-green-500" />
-            {energySmartCount} energy-smart picks
+            {energySmartCount} energy-smart
+          </Badge>
+          <Badge variant="secondary" className="gap-1 hidden md:flex">
+            <Zap className="h-3 w-3 text-amber-500" />
+            {totalPowerKw} kW total
           </Badge>
           <Badge variant="outline" className="tabular-nums">
             {scoredRooms.length} rooms
@@ -89,8 +125,9 @@ export function RecommendedDashboard() {
         <div className="flex items-start gap-2 text-xs text-muted-foreground">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            Ranked by <strong className="text-foreground">blended score</strong>: 60% availability
-            (sweet spot ~35% occupancy) + 40% energy efficiency (prefer buildings already running).
+            Ranked by <strong className="text-foreground">blended score</strong>: 55% availability
+            (sweet spot ~35% occupancy) + 45% energy efficiency (prefer buildings already heated).
+            Occupancy data is <strong className="text-foreground">live</strong> from check-ins.
           </span>
         </div>
       </div>
@@ -99,17 +136,29 @@ export function RecommendedDashboard() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top — scrollable card list */}
         <div ref={listRef} className="flex-1 overflow-y-auto">
-          <div className="space-y-2 p-3">
-            {scoredRooms.map((room, i) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                rank={i + 1}
-                isSelected={selectedBuildingId === room.buildingId}
-                onClick={() => handleCardClick(room.buildingId)}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="space-y-2 p-3">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : scoredRooms.length === 0 ? (
+            <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+              No recommended rooms available right now.
+            </div>
+          ) : (
+            <div className="space-y-2 p-3">
+              {scoredRooms.map((room, i) => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  rank={i + 1}
+                  isSelected={selectedBuildingId === room.building.id}
+                  onClick={() => handleCardClick(room.building.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Divider with legend */}
