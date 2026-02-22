@@ -84,17 +84,7 @@ INSERT INTO public.buildings (name, code, latitude, longitude, address) VALUES
 ('Huff Hall', 'HUFF', 40.1005, -88.2319, '1206 S Fourth St'),
 ('Campus Recreation Center East', 'CRCE', 40.1044, -88.2200, '1102 W Gregory Dr'),
 ('Activities & Recreation Center', 'ARC', 40.1012, -88.2362, '201 E Peabody Dr'),
-('State Farm Center', 'SFC', 40.0966, -88.2361, '1800 S First St'),
-('Memorial Stadium', 'MEM', 40.0988, -88.2358, '1402 S First St'),
 
--- Residence Halls (common study/gathering spots)
-('Ikenberry Commons', 'IKEN', 40.1005, -88.2279, '1301 E Pennsylvania Ave'),
-('Pennsylvania Avenue Residence Halls', 'PAR', 40.1005, -88.2212, '906 W College Ct'),
-('Illinois Street Residence Halls', 'ISR', 40.1096, -88.2180, '1010 W Illinois St'),
-('Lincoln Avenue Residence Hall', 'LAR', 40.0989, -88.2192, '1005 S Lincoln Ave'),
-('Florida Avenue Residence Halls', 'FAR', 40.1020, -88.2161, '1001 W College Ct'),
-('Nugent Hall', 'NUG', 40.1012, -88.2282, '207 E Gregory Dr'),
-('Wassaja Hall', 'WAS', 40.1018, -88.2289, '1200 W Stoughton St'),
 
 -- Additional academic
 ('Temple Buell Hall (Architecture)', 'TBH', 40.0961, -88.2341, '611 E Lorado Taft Dr'),
@@ -103,5 +93,4 @@ INSERT INTO public.buildings (name, code, latitude, longitude, address) VALUES
 ('Law Building', 'LAW', 40.1022, -88.2307, '504 E Pennsylvania Ave'),
 ('Campus Instructional Facility', 'CIF', 40.1134, -88.2292, '1405 W Springfield Ave'),
 ('National Center for Supercomputing Applications', 'NCSA2', 40.1152, -88.2249, '1205 W Clark St'),
-('Institute for Genomic Biology', 'IGB', 40.1158, -88.2250, '1206 W Gregory Dr'),
-('Electrical & Computer Engineering Building Annex', 'ECEBA', 40.1145, -88.2290, '1406 W Green St');
+('Institute for Genomic Biology', 'IGB', 40.1158, -88.2250, '1206 W Gregory Dr');
