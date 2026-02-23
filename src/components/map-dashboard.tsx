@@ -24,6 +24,7 @@ import {
   X,
   Users,
   Sparkles,
+  Flame,
 } from "lucide-react";
 import { useBuildings } from "@/hooks/use-buildings";
 import { useCheckins } from "@/hooks/use-checkins";
@@ -67,6 +68,7 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
   const [focusBuildingId, setFocusBuildingId] = useState<string | null>(null);
   const [focusCounter, setFocusCounter] = useState(0);
   const [show3DViewer, setShow3DViewer] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   const totalActive = checkinData.reduce((sum, b) => sum + b.active_count, 0);
 
@@ -123,6 +125,13 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
           setSidebarOpen((prev) => !prev);
         }
       }
+      // 'H' to toggle heatmap
+      if (e.key === "h" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
+          setShowHeatmap((prev) => !prev);
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -166,6 +175,16 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
             className="transition-transform hover:scale-105"
           >
             {satellite ? <Map className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            title={showHeatmap ? "Hide heat map (H)" : "Show heat map (H)"}
+            aria-label={showHeatmap ? "Hide heat map" : "Show heat map"}
+            className={`transition-transform hover:scale-105 ${showHeatmap ? "text-orange-500" : ""}`}
+          >
+            <Flame className="h-4 w-4" />
           </Button>
           <Link href="/recommended">
             <Button
@@ -296,6 +315,7 @@ export function MapDashboard({ userEmail }: MapDashboardProps) {
           mapStyle={satellite ? SATELLITE_STYLE : STREETS_STYLE}
           focusBuildingId={focusBuildingId}
           focusCounter={focusCounter}
+          showHeatmap={showHeatmap}
         />
       </main>
 

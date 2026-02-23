@@ -17,6 +17,7 @@ interface CampusMapProps {
   mapStyle: string;
   focusBuildingId: string | null;
   focusCounter: number;
+  showHeatmap?: boolean;
 }
 
 export function CampusMap({
@@ -27,6 +28,7 @@ export function CampusMap({
   mapStyle,
   focusBuildingId,
   focusCounter,
+  showHeatmap = false,
 }: CampusMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<ActiveCheckinData | null>(null);
@@ -127,7 +129,7 @@ export function CampusMap({
       interactiveLayerIds={[]}
       cursor={selectedBuilding ? "pointer" : "grab"}
     >
-      <HeatmapLayer data={checkinData} />
+      {showHeatmap && <HeatmapLayer data={checkinData} />}
       <BuildingMarkers
         data={checkinData}
         onMarkerClick={handleMarkerClick}
