@@ -2,6 +2,10 @@
 
 Mapify is a real-time campus occupancy platform for UIUC students. It combines live check-ins, map visualization, trend analytics, room recommendations, and an interactive 3D building viewer.
 
+## Demo
+
+[Watch the demo video](https://go.screenpal.com/watch/cOn0cAn0CA2)
+
 ## Features
 
 - **Interactive campus map** with live building markers and occupancy badges.
